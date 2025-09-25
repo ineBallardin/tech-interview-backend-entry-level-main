@@ -41,6 +41,6 @@ class Cart < ApplicationRecord
   end
 
   def recalculate_total
-    line_items.sum { |item| item.quantity * (item.price || 0).to_f }
+    line_items.reload.sum(&:total_price)
   end
 end
