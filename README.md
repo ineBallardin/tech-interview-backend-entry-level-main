@@ -126,7 +126,7 @@ Response:
 }
 ```
 
-### 3. Remover um produto do carrinho 
+### 4. Remover um produto do carrinho 
 
 Criar um endpoint para excluir um produto do do carrinho. 
 
