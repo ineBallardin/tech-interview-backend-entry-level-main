@@ -1,13 +1,23 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${1}" == "./bin/rails" ] && [ "${2}" = "server" ]; then
-  ./bin/rails db:prepare
-  ./bin/rails db:prepare RAILS_ENV=test
-fi
-
+# Remove server.pid if exists
 if [ -f tmp/pids/server.pid ]; then
   rm tmp/pids/server.pid
 fi
 
-exec "${@}"
+# Prepare database for any Rails server command
+if [[ "$*" == *"server"* ]] || [[ "$*" == *"rails s"* ]]; then
+  echo "Preparing development database..."
+  bundle exec rails db:create 2>/dev/null || true
+  bundle exec rails db:migrate
+  bundle exec rails db:seed 2>/dev/null || true
+fi
+
+# Prepare test database for RSpec
+if [[ "$*" == *"rspec"* ]]; then
+  echo "Preparing test database..."
+  RAILS_ENV=test bundle exec rails db:create 2>/dev/null || true
+  RAILS_ENV=test bundle exec rails db:migrate
+fi
+
+exec "$@"
