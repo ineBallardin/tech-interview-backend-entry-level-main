@@ -1,0 +1,5 @@
+mark_abandoned_carts:
+  cron: "0 * * * *" 
+  class: MarkCartAsAbandonedJob
+  queue: default
+  description: "Marks carts as abandoned (after 3h) and removes old abandoned carts (after 7 days)"

@@ -1,6 +1,6 @@
 class CartsController < ApplicationController
-  before_action :set_cart, only: [:show, :create, :add_item, :remove_item]
-  before_action :set_product, only: [:create, :add_item, :remove_item]
+  before_action :set_cart
+  before_action :set_product, only: [:create, :add_item]
 
   def show
     render json: @cart
@@ -19,6 +19,8 @@ class CartsController < ApplicationController
       @cart.add_product(product: @product, quantity: quantity)
       render json: @cart, status: :created
     end
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Product not found" }, status: :not_found
   end
 
   def add_item
@@ -26,21 +28,21 @@ class CartsController < ApplicationController
     @cart.add_product(product: @product, quantity: quantity)
 
     render json: @cart, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Product not found" }, status: :not_found
   end
 
   def remove_item
-    line_item = @cart.line_items.find_by(product_id: @product.id)
-
-    if line_item
-      line_item.destroy
-      @cart.reload
-
+    product_id = params[:product_id]
+    
+    if @cart.remove_item(product_id)
       render json: @cart, status: :ok
     else
-      render json: { error: "Product not found in cart." }, status: :not_found
+      render json: { 
+        error: "Product not found in cart",
+        message: "The specified product is not in the cart"
+      }, status: :not_found
     end
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Product not found." }, status: :not_found
   end
 
   private
