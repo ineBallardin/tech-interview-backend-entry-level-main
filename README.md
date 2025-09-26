@@ -30,27 +30,27 @@ Adicionar o produto no carrinho e devolver o payload com a lista de produtos do 
 
 ROTA: `/cart`
 Payload:
-```js
+```json
 {
   "product_id": 345, // id do produto sendo adicionado
   "quantity": 2, // quantidade de produto a ser adicionado
 }
 ```
 
-Response
-```js
+Response:
+```json
 {
   "id": 789, // id do carrinho
   "products": [
     {
-      "id": 645,
+      "id": 345,
       "name": "Nome do produto",
       "quantity": 2,
       "unit_price": 1.99, // valor unitário do produto
       "total_price": 3.98, // valor total do produto
     },
     {
-      "id": 646,
+      "id": 346,
       "name": "Nome do produto 2",
       "quantity": 2,
       "unit_price": 1.99,
@@ -67,19 +67,19 @@ Criar um endpoint para listar os produtos no carrinho atual.
 ROTA: `/cart`
 
 Response:
-```js
+```json
 {
   "id": 789, // id do carrinho
   "products": [
     {
-      "id": 645,
+      "id": 345,
       "name": "Nome do produto",
       "quantity": 2,
       "unit_price": 1.99, // valor unitário do produto
       "total_price": 3.98, // valor total do produto
     },
     {
-      "id": 646,
+      "id": 346,
       "name": "Nome do produto 2",
       "quantity": 2,
       "unit_price": 1.99,
@@ -115,11 +115,11 @@ Response:
       "total_price": 14.00, 
     },
     {
-      "id": 01020,
+      "id": 1020,
       "name": "Nome do produto Y",
       "quantity": 1,
-      "unit_price": 9.90, 
-      "total_price": 9.90, 
+      "unit_price": 9.90,
+      "total_price": 9.90,
     },
   ],
   "total_price": 23.9
