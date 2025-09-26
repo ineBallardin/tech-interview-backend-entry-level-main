@@ -2,15 +2,13 @@ class ApplicationController < ActionController::API
   include ActionController::Cookies
   include ActionController::RequestForgeryProtection
 
-  before_action :set_session_cookie
-
   private
 
-  def set_session_cookie
-    cookies["_cart_session"] ||= {
-      value: SecureRandom.hex(16),
-      httponly: true,
-      secure: Rails.env.production?
-    }
+  def t(key, options = {})
+    I18n.t(key, **{ scope: i18n_scope }.merge(options))
+  end
+
+  def i18n_scope
+    controller_name.to_sym
   end
 end

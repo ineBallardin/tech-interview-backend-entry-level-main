@@ -191,6 +191,51 @@ A aplicação já possui um Dockerfile, que define como a aplicação deve ser c
 
 ### Como executar o projeto
 
+## Executando com Docker (Recomendado)
+
+### E-commerce CLI
+Para facilitar o desenvolvimento, use nosso CLI customizado:
+
+```bash
+# Iniciar todos os serviços
+bin/ecommerce-cli up
+
+# Executar testes
+bin/ecommerce-cli rspec                           # Todos os testes
+bin/ecommerce-cli rspec spec/models/cart_spec.rb  # Teste específico
+
+# Comandos Rails
+bin/ecommerce-cli rails db:migrate
+bin/ecommerce-cli rails db:seed
+bin/ecommerce-cli console
+
+# Outros comandos úteis
+bin/ecommerce-cli stop        # Parar serviços (manter containers)
+bin/ecommerce-cli down        # Parar serviços e remover containers
+bin/ecommerce-cli build       # Rebuildar todos os serviços
+bin/ecommerce-cli build web   # Rebuildar serviço específico
+bin/ecommerce-cli sidekiq     # Executar Sidekiq worker
+bin/ecommerce-cli bash        # Bash no container
+bin/ecommerce-cli logs        # Ver logs
+
+# Ver todos os comandos
+bin/ecommerce-cli help
+```
+
+### Comandos Docker tradicionais
+Se preferir usar Docker Compose diretamente:
+
+```bash
+# Iniciar serviços
+docker compose up -d
+
+# Executar testes
+docker compose run --rm test bundle exec rspec
+
+# Console Rails
+docker compose run --rm web bundle exec rails console
+```
+
 ## Executando a app sem o docker
 Dado que todas as as ferramentas estão instaladas e configuradas:
 
@@ -213,6 +258,94 @@ Executar os testes:
 ```bash
 bundle exec rspec
 ```
+
+## Testando a API via Postman
+
+### Preparando o ambiente
+Primeiro, certifique-se de que a aplicação está rodando:
+
+```bash
+# Com CLI customizado
+bin/ecommerce-cli up
+bin/ecommerce-cli rails db:seed
+
+# Ou com Docker Compose
+docker compose up -d
+docker compose run --rm web bundle exec rails db:seed
+```
+
+A aplicação estará disponível em: `http://localhost:3000`
+
+### Endpoints implementados
+
+#### 1. GET /cart - Listar itens do carrinho
+- **URL:** `GET http://localhost:3000/cart`
+- **Headers:** `Content-Type: application/json`
+- **Response:** Retorna o carrinho atual da sessão
+
+#### 2. POST /cart - Adicionar produto no carrinho (apenas novos)
+- **URL:** `POST http://localhost:3000/cart`
+- **Headers:** `Content-Type: application/json`
+- **Body (JSON):**
+```json
+{
+  "product_id": 1,
+  "quantity": 2
+}
+```
+- **Nota:** Se o produto já existe no carrinho, retorna erro 409. Use `/cart/add_item` para atualizar quantidade.
+
+#### 3. POST /cart/add_item - Adicionar/atualizar quantidade do produto
+- **URL:** `POST http://localhost:3000/cart/add_item`
+- **Headers:** `Content-Type: application/json`
+- **Body (JSON):**
+```json
+{
+  "product_id": 1,
+  "quantity": 3
+}
+```
+- **Nota:** Se o produto já existe, soma a quantidade. Se não existe, adiciona ao carrinho.
+
+#### 4. DELETE /cart/:product_id - Remover produto do carrinho
+- **URL:** `DELETE http://localhost:3000/cart/1`
+- **Headers:** `Content-Type: application/json`
+- **Nota:** Substitua `:product_id` pelo ID do produto que deseja remover.
+
+### Produtos disponíveis (via db:seed)
+Após executar `rails db:seed`, os seguintes produtos estarão disponíveis:
+
+| ID | Nome | Preço |
+|----|------|-------|
+| 1 | Samsung Galaxy S24 Ultra | R$ 12999.99 |
+| 2 | iPhone 15 Pro Max | R$ 14999.99 |
+| 3 | Xiamo Mi 27 Pro Plus Master Ultra | R$ 999.99 |
+
+### Fluxo de teste sugerido
+
+1. **Listar carrinho vazio:**
+   - GET `/cart`
+
+2. **Adicionar primeiro produto:**
+   - POST `/cart` com `{"product_id": 1, "quantity": 2}`
+
+3. **Tentar adicionar mesmo produto novamente (erro esperado):**
+   - POST `/cart` com `{"product_id": 1, "quantity": 1}` - deve retornar 409
+
+4. **Atualizar quantidade do produto existente:**
+   - POST `/cart/add_item` com `{"product_id": 1, "quantity": 1}` - quantidade vira 3
+
+5. **Adicionar segundo produto:**
+   - POST `/cart/add_item` com `{"product_id": 2, "quantity": 1}`
+
+6. **Verificar carrinho:**
+   - GET `/cart` - deve mostrar 2 produtos
+
+7. **Remover um produto:**
+   - DELETE `/cart/1`
+
+8. **Verificar carrinho final:**
+   - GET `/cart` - deve mostrar apenas 1 produto
 
 ### Como enviar seu projeto
 Salve seu código em um versionador de código (GitHub, GitLab, Bitbucket) e nos envie o link publico. Se achar necessário, informe no README as instruções para execução ou qualquer outra informação relevante para correção/entendimento da sua solução.
