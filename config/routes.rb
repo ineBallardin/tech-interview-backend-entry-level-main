@@ -1,10 +1,15 @@
 require 'sidekiq/web'
+require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
   mount Sidekiq::Web => '/sidekiq'
-  post '/cart', to: 'carts#create'
-  get '/cart', to: 'carts#show'
-  post '/cart/add_item', to: 'carts#add_item'
+
+  resources :products
+
+  resource :cart, only: [:show, :create] do
+    post :add_item, on: :collection
+    delete :remove_item, path: ':product_id', on: :collection
+  end
 
   get "up" => "rails/health#show", as: :rails_health_check
 

@@ -1,5 +1,5 @@
 class CartsController < ApplicationController
-  before_action :set_cart, only: [:show, :create, :add_item]
+  before_action :set_cart
   before_action :set_product, only: [:create, :add_item]
 
   def show
@@ -11,21 +11,35 @@ class CartsController < ApplicationController
 
     if existing_line_item
       render json: {
-        error: "Product already in cart.",
-        message: "Use the /cart/add_item endpoint to update quantity."
+        error: t('.errors.product_already_in_cart'),
+        message: t('.errors.use_add_item_endpoint')
       }, status: :conflict
     else
       quantity = cart_params[:quantity].to_i
       @cart.add_product(product: @product, quantity: quantity)
       render json: @cart, status: :created
     end
+  rescue ActiveRecord::RecordNotFound
+    render json: { errors: [t('.errors.product_not_found')] }, status: :not_found
   end
 
   def add_item
     quantity = cart_params[:quantity].to_i
     @cart.add_product(product: @product, quantity: quantity)
-
+    
     render json: @cart, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { errors: [t('.errors.product_not_found')] }, status: :not_found
+  end
+
+  def remove_item
+    removed_item = @cart.remove_item(params[:product_id])
+
+    if removed_item
+      render json: @cart
+    else
+      render json: { errors: [t('.errors.product_not_found_in_cart')] }, status: :not_found
+    end
   end
 
   private

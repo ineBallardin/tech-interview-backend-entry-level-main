@@ -29,3 +29,18 @@
 
 en:
   hello: "Hello world"
+
+  carts:
+    errors:
+      product_already_in_cart: "Product already in cart."
+      use_add_item_endpoint: "Use the /cart/add_item endpoint to update quantity."
+      product_not_found: "Product not found"
+      product_not_found_in_cart: "Product not found in cart"
+      product_not_in_cart_message: "The specified product is not in the cart"
+
+  jobs:
+    mark_cart_as_abandoned:
+      marking_carts: "Marking %{count} cart(s) as abandoned"
+      cart_marked: "Cart #%{id} marked as abandoned"
+      removing_carts: "Removing %{count} abandoned cart(s)"
+      cart_removed: "Cart #%{id} removed (abandoned for more than 7 days)"
