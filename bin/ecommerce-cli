@@ -1,0 +1,134 @@
+#!/usr/bin/env ruby
+require "fileutils"
+
+APP_ROOT = File.expand_path("..", __dir__)
+
+def system!(*args)
+  system(*args, exception: true)
+end
+
+def help_message
+  puts <<~HELP
+    E-commerce CLI - Simplified Docker commands
+
+    Usage: bin/ecommerce-cli [COMMAND] [OPTIONS]
+
+    Commands:
+      up                     Start all services and show logs
+      up -d                  Start all services in background
+      down                   Stop all services and remove containers
+      stop                   Stop all services (keep containers)
+      stop [SERVICE]         Stop specific service (web, db, redis, sidekiq)
+      restart                Restart all services
+      build                  Build/rebuild all services
+      build [SERVICE]        Build/rebuild specific service (web, db, redis, test)
+      logs                   Show logs from all services
+      logs [SERVICE]         Show logs from specific service (web, db, redis)
+
+      rspec                  Run all tests
+      rspec [PATH]           Run specific test file/spec
+
+      rails [COMMAND]        Run rails commands in container
+      console                Start rails console
+
+      sidekiq                Start sidekiq worker
+
+      bash                   Start bash session in web container
+
+      Examples:
+        bin/ecommerce-cli up
+        bin/ecommerce-cli rspec spec/models/cart_spec.rb
+        bin/ecommerce-cli rails db:migrate
+        bin/ecommerce-cli console
+  HELP
+end
+
+command = ARGV[0]
+
+case command
+when "up"
+  if ARGV[1] == "-d"
+    puts "🚀 Starting e-commerce services in background..."
+    system! "docker compose up -d"
+  else
+    puts "🚀 Starting e-commerce services..."
+    system! "docker compose up"
+  end
+
+when "down"
+  puts "🛑 Stopping e-commerce services and removing containers..."
+  system! "docker compose down"
+
+when "stop"
+  service = ARGV[1]
+  if service
+    puts "⏹️  Stopping service: #{service}..."
+    system! "docker compose stop #{service}"
+  else
+    puts "⏹️  Stopping all e-commerce services..."
+    system! "docker compose stop"
+  end
+
+when "restart"
+  puts "🔄 Restarting e-commerce services..."
+  system! "docker compose restart"
+
+when "build"
+  service = ARGV[1]
+  if service
+    puts "🔨 Building service: #{service}..."
+    system! "docker compose build #{service}"
+  else
+    puts "🔨 Building all e-commerce services..."
+    system! "docker compose build"
+  end
+
+when "logs"
+  service = ARGV[1]
+  if service
+    system! "docker compose logs -f #{service}"
+  else
+    system! "docker compose logs -f"
+  end
+
+when "rspec"
+  test_path = ARGV[1..-1].join(" ")
+  puts "🧪 Running tests#{test_path.empty? ? "" : ": #{test_path}"}..."
+
+  if test_path.empty?
+    system! "docker compose run --rm test bundle exec rspec"
+  else
+    system! "docker compose run --rm test bundle exec rspec #{test_path}"
+  end
+
+when "rails"
+  rails_command = ARGV[1..-1].join(" ")
+  if rails_command.empty?
+    puts "❌ Please provide a rails command"
+    exit 1
+  end
+
+  puts "⚡ Running: rails #{rails_command}..."
+  system! "docker compose run --rm web bundle exec rails #{rails_command}"
+
+when "console"
+  puts "💻 Starting Rails console..."
+  system! "docker compose run --rm web bundle exec rails console"
+
+when "sidekiq"
+  puts "🔧 Starting Sidekiq worker..."
+  system! "docker compose up sidekiq"
+
+when "bash"
+  puts "🐚 Starting bash session..."
+  system! "docker compose run --rm web bash"
+
+when "help", "--help", "-h", nil
+  help_message
+
+else
+  puts "❌ Unknown command: #{command}"
+  puts ""
+  help_message
+  exit 1
+end

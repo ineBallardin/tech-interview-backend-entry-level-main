@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: store_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7.0.15-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/store_test
+      REDIS_URL: redis://localhost:6379/0
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.3.1
+        bundler-cache: true
+
+    - name: Setup test database
+      run: |
+        bundle exec rails db:prepare
+
+    - name: Run tests
+      run: |
+        bundle exec rspec --format documentation
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-results
+        path: |
+          tmp/screenshots/
+          log/test.log
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.3.1
+        bundler-cache: true
+
+    - name: Run RuboCop (if available)
+      run: |
+        if bundle exec rubocop --version > /dev/null 2>&1; then
+          echo "Running RuboCop..."
+          bundle exec rubocop
+        else
+          echo "RuboCop not available, skipping lint check"
+        fi
+      continue-on-error: true
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.3.1
+        bundler-cache: true

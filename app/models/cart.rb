@@ -39,14 +39,9 @@ class Cart < ApplicationRecord
   end
 
   def remove_item(product_id)
-    line_item = line_items.find_by(product_id: product_id)
-    
-    if line_item
+    line_items.find_by(product_id: product_id)&.tap do |line_item|
       line_item.destroy
       touch_interaction!
-      true
-    else
-      false
     end
   end
 
@@ -98,11 +93,13 @@ class Cart < ApplicationRecord
   end
 
   def touch_interaction!
-    update_column(:last_interaction_at, Time.current) if persisted?
+    return unless persisted?
+
+    attributes = { last_interaction_at: Time.current }
     if abandoned?
-      update_column(:abandoned, false)
-      update_column(:abandoned_at, nil)
+      attributes.merge!(abandoned: false, abandoned_at: nil)
     end
+    update(attributes)
   end
 
   def recalculate_total

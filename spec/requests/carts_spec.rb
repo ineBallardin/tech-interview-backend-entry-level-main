@@ -137,22 +137,20 @@ RSpec.describe "/cart", type: :request do
     context "when product is not in cart" do
       it "returns not_found error" do
         delete "/cart/999999"
-        
+
         expect(response).to have_http_status(:not_found)
-        
         json_response = JSON.parse(response.body)
-        expect(json_response['error']).to eq("Product not found in cart")
+        expect(json_response['errors']).to include("Product not found in cart")
       end
     end
 
     context "when no cart exists in session" do
       it "creates new cart and returns not_found error" do
         delete "/cart/#{product.id}"
-        
+
         expect(response).to have_http_status(:not_found)
-        
         json_response = JSON.parse(response.body)
-        expect(json_response['error']).to eq("Product not found in cart")
+        expect(json_response['errors']).to include("Product not found in cart")
       end
     end
   end

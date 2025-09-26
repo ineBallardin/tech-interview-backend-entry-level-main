@@ -29,6 +29,18 @@ services:
         environment:
             - DATABASE_URL=postgresql://postgres:password@db:5432/store_development
             - REDIS_URL=redis://redis:6379
+    sidekiq:
+        build: .
+        entrypoint: ['bash', 'bin/docker-entrypoint']
+        command: bundle exec sidekiq
+        volumes:
+            - .:/rails
+        depends_on:
+            - db
+            - redis
+        environment:
+            - DATABASE_URL=postgresql://postgres:password@db:5432/store_development
+            - REDIS_URL=redis://redis:6379
     test:
         build: .
         entrypoint: ['bash', 'bin/docker-entrypoint']
